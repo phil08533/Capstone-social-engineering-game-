@@ -1,8 +1,5 @@
 extends Node2D
 
-@onready var intro_popup = $Intro
-@onready var intro_label = $Intro/Label
-@onready var continue_button = $Intro/ContinueButton
 @onready var file_buttons = $FileButtons.get_children()
 @onready var popup = $Feedback
 @onready var popup_label = $Feedback/Label
@@ -34,6 +31,9 @@ func _ready():
 	start_button.connect("pressed", Callable(self, "_on_start_button_pressed"))
 	return_button.connect("pressed", Callable(self, "_on_return_pressed"))
 	return_button.tooltip_text = "Close this window and return to office."
+
+func _on_start_button_pressed():
+	popup.hide()
 
 func _on_file_pressed(button):
 	var index = button.get_meta("index")
