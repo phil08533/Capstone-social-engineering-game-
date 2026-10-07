@@ -1,3 +1,4 @@
 # Godot generated
 .godot/
 *.tmp
+build/
