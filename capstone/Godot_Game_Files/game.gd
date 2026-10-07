@@ -14,6 +14,7 @@ enum Stage { INTRO, EMAIL_1, CHAT_2, EMAIL_2, CHAT_3, USB, FINISHED }
 
 const MAIN_MENU := "res://Godot_Game_Files/main_menu.tscn"
 const TIMELINE := "timeline"
+const TouchControls := preload("res://Godot_Game_Files/touch_controls.gd")
 
 ## Where the "!" alert floats for each stage that waits on the player.
 const ALERT_SPOTS := {
@@ -23,6 +24,7 @@ const ALERT_SPOTS := {
 }
 
 var stage: Stage = Stage.INTRO
+var touch_controls: CanvasLayer
 
 @onready var alert: Area2D = $Event_Tree/Puzzles/EmailAlert
 @onready var email_puzzle: Node2D = $PhisingEmail
@@ -33,6 +35,8 @@ var stage: Stage = Stage.INTRO
 
 func _ready() -> void:
 	Global.reset()
+	touch_controls = TouchControls.new()
+	add_child(touch_controls)
 	player_camera.make_current()
 	alert.set_active(false)
 	alert.activated.connect(_on_alert_activated)
@@ -49,15 +53,21 @@ func _exit_tree() -> void:
 		Dialogic.timeline_ended.disconnect(_on_timeline_ended)
 
 
+## Lets the player walk around (and shows the touch buttons), or freezes them.
+func _set_player_free(free: bool) -> void:
+	player_body.set_physics_process(free)
+	touch_controls.set_enabled(free)
+
+
 func _play_chat(step: int) -> void:
 	alert.set_active(false)
-	player_body.set_physics_process(false)
+	_set_player_free(false)
 	Dialogic.VAR.chatstep = step
 	Dialogic.start(TIMELINE)
 
 
 func _on_timeline_ended() -> void:
-	player_body.set_physics_process(true)
+	_set_player_free(true)
 	match stage:
 		Stage.INTRO:
 			_wait_for_player(Stage.EMAIL_1)
@@ -75,7 +85,7 @@ func _wait_for_player(next_stage: Stage) -> void:
 
 func _on_alert_activated() -> void:
 	alert.set_active(false)
-	player_body.set_physics_process(false)
+	_set_player_free(false)
 	match stage:
 		Stage.EMAIL_1, Stage.EMAIL_2:
 			email_puzzle.start()
@@ -94,14 +104,14 @@ func _on_puzzle_finished() -> void:
 			_play_chat(2)
 		Stage.USB:
 			stage = Stage.FINISHED
-			player_body.set_physics_process(true)
+			_set_player_free(true)
 			_show_ending()
 
 
 ## The player backed out of a puzzle without completing it: the alert stays.
 func _on_puzzle_closed() -> void:
 	player_camera.make_current()
-	player_body.set_physics_process(true)
+	_set_player_free(true)
 	alert.set_active(true)
 
 

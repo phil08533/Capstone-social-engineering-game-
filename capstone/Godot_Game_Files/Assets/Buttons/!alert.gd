@@ -14,9 +14,10 @@ func _ready() -> void:
 	sprite.play("float")
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if player_in_area and event.is_action_pressed("interact"):
-		get_viewport().set_input_as_handled()
+# Polled rather than handled as an event so it also works with the on-screen
+# touch button, which sets the action state directly.
+func _process(_delta: float) -> void:
+	if player_in_area and Input.is_action_just_pressed("interact"):
 		activated.emit()
 
 
