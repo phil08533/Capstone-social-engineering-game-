@@ -1,5 +1,10 @@
 extends Label
 
-#Keep the score updated boi
-func _process(_delta: float) -> void:
-	text = "score: $" + str(Global.score)
+
+func _ready() -> void:
+	Global.score_changed.connect(_update)
+	_update(Global.score)
+
+
+func _update(value: int) -> void:
+	text = "score: $" + str(value)

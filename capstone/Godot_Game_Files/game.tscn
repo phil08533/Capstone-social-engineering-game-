@@ -1,5 +1,6 @@
 [gd_scene load_steps=21 format=3 uid="uid://b5cb8hi831nnt"]
 
+[ext_resource type="Script" path="res://Godot_Game_Files/game.gd" id="99_gamegd"]
 [ext_resource type="Script" uid="uid://by34sk16ycs2r" path="res://Godot_Game_Files/event_tree.gd" id="1_eqekq"]
 [ext_resource type="PackedScene" uid="uid://bnpveoij6ge22" path="res://Godot_Game_Files/Assets/Characters/Player.tscn" id="1_l7whm"]
 [ext_resource type="Texture2D" uid="uid://dsuhcbcpm4ryw" path="res://Godot_Game_Files/Assets/Characters/office background.png" id="2_60j76"]
@@ -10,60 +11,12 @@
 [ext_resource type="Texture2D" uid="uid://cwxh1llb10q37" path="res://Godot_Game_Files/Assets/Characters/office background2.png" id="4_eqekq"]
 [ext_resource type="PackedScene" uid="uid://r1agwgfqfbg4" path="res://Godot_Game_Files/Assets/Music_Sounds/Radio.tscn" id="5_60j76"]
 [ext_resource type="PackedScene" uid="uid://c78uxvq3ytj03" path="res://Godot_Game_Files/Assets/Characters/npc_2.tscn" id="6_w2jga"]
-[ext_resource type="PackedScene" uid="uid://15rwt1q3ccjm" path="res://Godot_Game_Files/chats/chat_1.tscn" id="7_hw1hp"]
 [ext_resource type="PackedScene" uid="uid://bgjesj5di2ixk" path="res://Godot_Game_Files/Assets/Characters/npc_3.tscn" id="7_woipg"]
 [ext_resource type="PackedScene" uid="uid://cslssty13vqwr" path="res://Godot_Game_Files/Assets/Characters/node_2d.tscn" id="8_prroa"]
 [ext_resource type="Script" uid="uid://ntcob37ojm7b" path="res://Godot_Game_Files/score.gd" id="9_2npts"]
 [ext_resource type="PackedScene" uid="uid://dvcynifnfhk4c" path="res://Godot_Game_Files/Assets/Buttons/!alert.tscn" id="9_woipg"]
 [ext_resource type="Script" uid="uid://b14l2wwp0qdu3" path="res://Godot_Game_Files/Assets/Characters/Player.gd" id="14_eqekq"]
 [ext_resource type="PackedScene" uid="uid://xq1pobtbqe5g" path="res://Godot_Game_Files/Puzzles/Emily/dowload.tscn" id="17_7nhs0"]
-
-[sub_resource type="GDScript" id="GDScript_woipg"]
-script/source = "extends Node
-var score: int = 0
-
-#EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! 
-#EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! #EVENT TIME LINE DO NOT CHANGE! 
-func _ready():
-	$Player/CharacterBody2D/Playercamera2d.make_current()
-	Dialogic.signal_event.connect(_on_dialogic_signal)
-	$Event_Tree/Puzzles/EmailAlert.visible = false
-	$Event_Tree/Puzzles/EmailAlert.set_process(false)
-	
-func _on_dialogic_signal(argument: String):
-	if argument == \"complete_chat1\": 
-		$Event_Tree/Puzzles/EmailAlert.set_process(true)
-		$Event_Tree/Puzzles/EmailAlert.visible = true
-	elif argument == \"complete_chat2\":
-		$Event_Tree/Puzzles/EmailAlert.set_process(true)
-		$Event_Tree/Puzzles/EmailAlert.visible = true
-		$Event_Tree/Puzzles/EmailAlert.position = Vector2(357, 371)
-		
-		
-func _process(_delta: float) -> void:
-	if Global.counter == 1:
-		$Event_Tree/Puzzles/EmailAlert.set_process(false)
-		$Event_Tree/Puzzles/EmailAlert.visible = false
-		$PhisingEmail.set_process(false)
-		run_timeline()
-	elif Global.counter == 3:
-		$Event_Tree/Puzzles/EmailAlert.set_process(false)
-		$Event_Tree/Puzzles/EmailAlert.visible = false
-		$PhisingEmail.set_process(false)
-		run_timeline()
-		
-	elif Global.counter == 4:
-		$Event_Tree/Puzzles/EmailAlert.set_process(false)
-		$Event_Tree/Puzzles/EmailAlert.visible = false
-		$PhisingEmail.set_process(false)
-		run_timeline()
-		
-func run_timeline():
-	Dialogic.start(\"timeline\")
-	Global.counter += 1
-	print(\"event counter: \", Global.counter)
-	
-"
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_e2o6t"]
 distance = -354.0
@@ -73,7 +26,7 @@ b = Vector2(-1, -510)
 
 [node name="Game" type="Node2D"]
 position = Vector2(16, 22)
-script = SubResource("GDScript_woipg")
+script = ExtResource("99_gamegd")
 
 [node name="PhisingEmail" parent="." instance=ExtResource("2_hw1hp")]
 position = Vector2(-9.435, -604.19)
@@ -88,8 +41,6 @@ position = Vector2(109, 371)
 monitorable = false
 
 [node name="Chats" type="Node" parent="Event_Tree"]
-
-[node name="Chat1" parent="Event_Tree/Chats" instance=ExtResource("7_hw1hp")]
 
 [node name="NPC\'s" type="Node" parent="."]
 

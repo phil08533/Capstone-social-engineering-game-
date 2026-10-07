@@ -1,12 +1,22 @@
 extends Node2D
+## Malware-flagging puzzle: the player clicks the files they think are malware.
 
-@onready var file_buttons = $FileButtons.get_children()
-@onready var popup = $Feedback
-@onready var popup_label = $Feedback/Label
-@onready var start_button = $Feedback/ContinueButton
-@onready var return_button = $ReturnButton
+## Emitted when every malware file is flagged and the player dismisses the score.
+signal finished
+## Emitted when the player leaves before completing the puzzle.
+signal closed
 
-var filenames = [
+const CORRECT_REWARD := 100
+const INCORRECT_PENALTY := 50
+
+@onready var file_buttons: Array[Node] = $FileButtons.get_children()
+@onready var popup: PopupPanel = $Feedback
+@onready var popup_label: Label = $Feedback/Label
+@onready var popup_continue: Button = $Feedback/ContinueButton
+@onready var return_button: Button = $ReturnButton
+@onready var camera: Camera2D = $flagpuzzlecamera
+
+var filenames: Array[String] = [
 	"Resume.docx",
 	"Update.zip",
 	"trojan.exe",
@@ -14,75 +24,84 @@ var filenames = [
 	"cat_video.src",
 ]
 
-var malware_files = ["trojan.exe", "cat_video.src", "Update.zip"]  # Set your 3 malware files
+var malware_files: Array[String] = ["trojan.exe", "cat_video.src", "Update.zip"]
 
-var correct_flags = 0
-var incorrect_flags = 0
+var correct_flags := 0
+var incorrect_flags := 0
+var completed := false
 
-func _ready():
-	for i in range(file_buttons.size()):
-		var button = file_buttons[i]
+
+func _ready() -> void:
+	for i in file_buttons.size():
+		var button: BaseButton = file_buttons[i]
 		button.get_node("FileLabel").text = filenames[i]
-		button.set_meta("index", i)
-		button.set_meta("flagged", false)
-		button.get_node("Flag").visible = false
-		button.connect("pressed", Callable(self, "_on_file_pressed").bind(button))
+		button.pressed.connect(_on_file_pressed.bind(button, filenames[i]))
 
-	start_button.connect("pressed", Callable(self, "_on_start_button_pressed"))
-	return_button.connect("pressed", Callable(self, "_on_return_pressed"))
+	popup_continue.pressed.connect(_on_feedback_continue_pressed)
+	return_button.pressed.connect(_on_return_pressed)
 	return_button.tooltip_text = "Close this window and return to office."
 
-func _on_start_button_pressed():
+
+## Resets the puzzle, shows the briefing and takes over the camera.
+func start() -> void:
+	correct_flags = 0
+	incorrect_flags = 0
+	completed = false
+	for button in file_buttons:
+		button.get_node("Flag").visible = false
+		button.set_meta("flagged", false)
 	popup.hide()
+	_set_briefing_visible(true)
+	camera.make_current()
 
-func _on_file_pressed(button):
-	var index = button.get_meta("index")
-	var already_flagged = button.get_meta("flagged")
 
-	if already_flagged:
+func _set_briefing_visible(shown: bool) -> void:
+	$intro2.visible = shown
+	$intro3.visible = shown
+	$Continue2.visible = shown
+	$Label.visible = shown
+
+
+func _on_file_pressed(button: BaseButton, filename: String) -> void:
+	if completed or button.get_meta("flagged", false):
 		return
-
-	var filename = filenames[index]
-	var is_malware = malware_files.has(filename)
-
 	button.set_meta("flagged", true)
 	button.get_node("Flag").visible = true
 
-	if is_malware:
+	if malware_files.has(filename):
 		correct_flags += 1
-		popup_label.text = "Correct! '%s' is malware. \n(Click to continue)" % filename
-
+		Global.score += CORRECT_REWARD
+		popup_label.text = "Correct! '%s' is malware.\n(Click to continue)" % filename
 		if correct_flags == malware_files.size():
-			popup_label.text += "\n\nAll malware flagged!"
-			popup.popup_centered()
-			await get_tree().create_timer(3.0).timeout
-			show_score_popup()
-			return
+			completed = true
+			popup_label.text += "\n\nAll malware flagged!\n" + _score_summary()
 	else:
 		incorrect_flags += 1
-		popup_label.text = "Incorrect. '%s' is safe. \n(Click to continue)" % filename
+		Global.score -= INCORRECT_PENALTY
+		popup_label.text = "Incorrect. '%s' is safe.\n(Click to continue)" % filename
 
 	popup.popup_centered()
 
 
-func _on_return_pressed():
-	$"../Player/CharacterBody2D/Playercamera2d".make_current()
+func _score_summary() -> String:
+	var attempts := correct_flags + incorrect_flags
+	var percent := int(correct_flags * 100.0 / attempts)
+	return "Accuracy: %d%%  (Correct: %d, Incorrect: %d)" % [percent, correct_flags, incorrect_flags]
 
-func show_score_popup():
-	var attempts = correct_flags + incorrect_flags
-	var total_malware = malware_files.size()
-	var score = int((correct_flags * 100.0) / attempts)
-	popup_label.text = "Final Score: %d%%\n Correct: %d\n Incorrect: %d" % [score, correct_flags, incorrect_flags]
-	popup.popup_centered()
 
-#func reset_flags():
-#	for button in file_buttons:
-#		button.set_meta("flagged", false)
-#		button.get_node("Flag").visible = false
+func _on_feedback_continue_pressed() -> void:
+	popup.hide()
+	if completed:
+		finished.emit()
+
+
+func _on_return_pressed() -> void:
+	popup.hide()
+	if completed:
+		finished.emit()
+	else:
+		closed.emit()
 
 
 func _on_continue_2_pressed() -> void:
-	$intro2.hide()
-	$intro3.hide()
-	$Continue2.hide()
-	$Label.hide()
+	_set_briefing_visible(false)

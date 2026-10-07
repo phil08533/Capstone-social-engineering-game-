@@ -1,27 +1,41 @@
 extends Area2D
+## The floating "!" above a computer. When active and the player stands in it,
+## pressing "interact" emits `activated`; the level decides what that opens.
 
-@onready var sprite = $AnimatedSprite2D
-var player_in_area = false
+signal activated
 
-func _ready():
-	# Start the popup animation
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var prompt: Label = $AlertLabel
+
+var player_in_area := false
+
+
+func _ready() -> void:
 	sprite.play("float")
 
-# Must include delta parameter to match parent signature
-func _process(_delta: float):
-	if player_in_area and Input.is_action_just_pressed("interact"):
-		open_puzzle_scene()
-	
-func _on_body_entered(_body):
-		player_in_area = true
-		$AlertLabel.visible = true
-		print("Body Entered")
 
-func _on_body_exited(_body):
+func _unhandled_input(event: InputEvent) -> void:
+	if player_in_area and event.is_action_pressed("interact"):
+		get_viewport().set_input_as_handled()
+		activated.emit()
+
+
+## Show or hide the alert. While inactive it cannot be triggered.
+func set_active(active: bool) -> void:
+	visible = active
+	set_deferred("monitoring", active)
+	if not active:
 		player_in_area = false
-		$AlertLabel.visible = false
+		prompt.visible = false
 
-func open_puzzle_scene():
-	$"../../../PhisingEmail".set_process(true)
-	$"../../../PhisingEmail".reset_alert()
-	$"../../../PhisingEmail/phisingemailcamera2d".make_current()
+
+func _on_body_entered(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		player_in_area = true
+		prompt.visible = true
+
+
+func _on_body_exited(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		player_in_area = false
+		prompt.visible = false

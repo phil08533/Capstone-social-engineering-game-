@@ -6,6 +6,10 @@ const SPEED = 230
 const JUMP_FORCE = -350
 const GRAVITY = 20
 
+
+func _ready() -> void:
+	add_to_group("player")
+
 func _physics_process(_delta: float) -> void:
 	# Gravity
 	if not is_on_floor():

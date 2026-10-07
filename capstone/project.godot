@@ -38,7 +38,7 @@ layout/style_directory={
 "ChatProfile": "res://Godot_Game_Files/chats/ChatProfile.tres"
 }
 layout/style_list=["res://Godot_Game_Files/chats/ChatProfile.tres", ""]
-layout/default_style=""
+layout/default_style="ChatProfile"
 glossary/default_case_sensitive=true
 variables={
 "chatstep": 0

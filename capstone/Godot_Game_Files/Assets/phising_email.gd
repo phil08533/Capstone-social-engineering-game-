@@ -1,15 +1,14 @@
 extends Node2D
+## Phishing-email puzzle. The player accepts or rejects a suspicious email.
+## Every email in `messages` is a phishing attempt, so rejecting is correct.
+
+## Emitted once the player has read the feedback and clicked Continue.
+signal finished
+
+const REWARD := 100
 
 
 var messages = [
-		"""
-Dear Valued Customer,
-We noticed suspicious activity on your account of magical creatures.
-Please confirm your rainbow code and billing at [FAKE-LINK] immediately.
-Failure to respond will result in loss of your sparkles.
-Click the glowing button to avoid disappointment.
-Sincerely, The Unicorn Billing Team
-""",
 		"""
 Dear Valued Customer,
 We noticed suspicious activity on your account of magical creatures.
@@ -43,62 +42,69 @@ Thanks!!
 
 var emails = ["""hotdogwarrior@hotdot.com""","""hr@workofice.com""","""dragonmaster302@yawho.com""","""gregk@worckoffice.com""","""Ilostmyhat@hatlover.com"""]
 
-# Cache node references (change names if your scene uses different ones)
+@onready var accept_button: BaseButton = $Button_manager/Accept
+@onready var reject_button: BaseButton = $Button_manager/Reject
+@onready var help_button: BaseButton = $Button_manager/Help
+@onready var continue_button: BaseButton = $Button_manager/Continue
+@onready var help_label: Label = $Button_manager/Help/Label
+@onready var feedback_label: Label = $Button_manager/Continue/Label2
+@onready var camera: Camera2D = $phisingemailcamera2d
 
 
 func _ready() -> void:
-	initialize()
-	
-func reset_alert() -> void:
-	initialize()
+	_reset()
 
-func initialize():
-	randomize()  # seed RNG
+
+## Shows a fresh email and takes over the camera.
+func start() -> void:
+	_reset()
+	camera.make_current()
+
+
+func _reset() -> void:
 	_show_random_email()
-	$Button_manager/Accept.visible = true
-	$Button_manager/Reject.visible = true
-	$Button_manager/Help.visible = true
-	$Button_manager/Continue.visible = false
-	$Button_manager/Help/Label.text = "⚠️ Watch for common phishing signs:
+	accept_button.visible = true
+	reject_button.visible = true
+	help_button.visible = true
+	continue_button.visible = false
+	help_label.visible = false
+	help_label.text = "⚠️ Watch for common phishing signs:
 • Urgent or threatening language
 • Requests for passwords or payment info
 • Strange links or unknown senders
 • Poor spelling, odd formatting, or suspicious attachments
 Never share sensitive info through email.
 "
-	
+
+
 func _show_random_email() -> void:
 	$PhisingEmail/message.text = messages.pick_random()
 	$PhisingEmail/email.text = "FROM: " + emails.pick_random()
-	
+
+
+func _show_feedback(text: String) -> void:
+	feedback_label.text = text
+	accept_button.visible = false
+	reject_button.visible = false
+	help_button.visible = false
+	continue_button.visible = true
+
+
 func _on_accept_pressed() -> void:
-	$Button_manager/Continue/Label2.text = "WRONG! Never trust an email asking for credit card information.
-	Always look who is sending it and make sure you know them."
-	$Button_manager/Accept.visible = !$Button_manager/Accept.visible
-	$Button_manager/Reject.visible = !$Button_manager/Reject.visible
-	$Button_manager/Help.visible = !$Button_manager/Help.visible
-	$Button_manager/Continue.visible = !$Button_manager/Continue.visible
-	print("Score is:", Global.score)
-	Global.score -= 100
-	
-func _on_continue_pressed() -> void:
-	Global.counter += 1
-	print ("event counter: ", Global.counter)
-	print("Score is:", Global.score)
-	Dialogic.VAR.chatstep += 1
-	print("chat step: ",Dialogic.VAR.chatstep)
-	$"../Player/CharacterBody2D/Playercamera2d".make_current()
-	$".".set_process(false)
+	Global.score -= REWARD
+	_show_feedback("WRONG! Never trust an email asking for credit card information.
+	Always look who is sending it and make sure you know them.")
+
 
 func _on_reject_pressed() -> void:
-	$Button_manager/Continue/Label2.text = "CORRECT! Never trust an email asking for credit card information.
-	Always look who is sending it and make sure you know them."
-	$Button_manager/Accept.visible = !$Button_manager/Accept.visible
-	$Button_manager/Reject.visible = !$Button_manager/Reject.visible
-	$Button_manager/Help.visible = !$Button_manager/Help.visible
-	$Button_manager/Continue.visible = !$Button_manager/Continue.visible
-	print("Score is:", Global.score)
-	Global.score += 100
+	Global.score += REWARD
+	_show_feedback("CORRECT! Never trust an email asking for credit card information.
+	Always look who is sending it and make sure you know them.")
+
+
+func _on_continue_pressed() -> void:
+	finished.emit()
+
 
 func _on_help_pressed() -> void:
-	$Button_manager/Help/Label.visible = !$Button_manager/Help/Label.visible
+	help_label.visible = !help_label.visible
